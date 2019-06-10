@@ -142,7 +142,6 @@ void DatabaseFunctions::createAction(nlohmann::json jobj, std::string type) {
                 std::cout << "ER 5" << std::endl;
             }
 
-;
         }
 
     }
@@ -192,7 +191,117 @@ void DatabaseFunctions::createAction(nlohmann::json jobj, std::string type) {
 }
 
 void DatabaseFunctions::vote(nlohmann::json jobj, std::string type) {
+    bool flag = true;
 
+    int memid = jobj["member"];
+    long ts = jobj["timestamp"];
+    std::string mempass = jobj["password"];
+    int actionid = jobj["action"];
+
+    pqxx::connection C("dbname=dbtest1");
+    pqxx::work W(C);
+
+    pqxx::result R;
+
+    R = W.exec("SELECT id, password FROM members WHERE id = " + std::to_string(memid));
+    //if such member doesnt exist
+    if (R.empty()){
+
+        //check if memberid is taken
+        R = W.exec("SELECT id FROM takenid WHERE id = " + std::to_string(memid));
+
+        //is not taken
+        if (R.empty()){
+            //we can create new member
+            W.exec("INSERT INTO takenid VALUES (" + std::to_string(memid) + ")");
+            W.exec("INSERT INTO members (id, password, timestamp) "
+                   "VALUES (" + std::to_string(memid) + ", '" + mempass + "', " + std::to_string(ts) + ")");
+        }
+
+        else{
+            //memberid is taken
+            flag = false;
+            std::cout << "ER 1" << std::endl;
+        }
+    }
+
+        //such member already exist
+    else{
+        std::string currMemPass = R[0][1].as<std::string>();
+
+
+        //check if password is not correct
+        if (currMemPass != mempass){
+            flag = false;
+            std::cout << "ER 2" << std::endl;
+        }
+
+            //password is correct
+        else{
+            //check if member is frozen
+            R = W.exec("SELECT timestamp FROM members WHERE id = " + std::to_string(memid));
+
+            auto lastTS = R[0][0].as<long>();
+
+            if (isFrozen(lastTS, ts)){
+                flag = false;
+                std::cout << "ER 3" << std::endl;
+            }
+
+            else {
+                //update timestamp of member
+                W.exec("UPDATE members SET timestamp = " + std::to_string(ts) + " WHERE id = " + std::to_string(memid));
+            }
+
+        }
+    }
+
+    //check if action already exist
+    if (flag){
+        R = W.exec("SELECT id FROM actions WHERE id = " + std::to_string(actionid));
+        //if doesnt exist
+        if (R.empty()){
+            flag = false;
+            std::cout << "ER 4" << std::endl;
+        }
+
+            //action already exist
+        else{
+            //check if member already voted for this action
+
+            R = W.exec("SELECT * FROM votes WHERE actionid = " + std::to_string(actionid) + " AND memberid = " + std::to_string(memid));
+
+            if (R.empty()){
+                //not voted
+                W.exec("INSERT INTO votes VALUES (" + std::to_string(actionid) + ", " + std::to_string(memid) + ", '" + type + "')");
+
+                if (type == "upvote")
+                    W.exec("UPDATE actions SET upvotes = upvotes + 1 WHERE id = " + std::to_string(actionid));
+                else if (type == "downvote")
+                    W.exec("UPDATE actions SET downvotes = downvotes + 1 WHERE id = " + std::to_string(actionid));
+
+
+            }
+
+            else{
+                //already voted
+                flag = false;
+                std::cout << "ER 5" << std::endl;
+            }
+        }
+    }
+
+
+    //all is correct
+    if (flag){
+        W.commit();
+
+        std::cout << confirmation << std::endl;
+    }
+
+    else{
+        std::cout << negation << std::endl;
+    }
 }
 
 

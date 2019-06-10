@@ -41,9 +41,19 @@ void InputReader::readApp() {
             dbfun.createAction(jobj["protest"], "protest");
         }
 
-        if (jobj["support"] != nullptr){
+        else if (jobj["support"] != nullptr){
             dbfun.createAction(jobj["support"], "support");
         }
+
+        else if (jobj["upvote"] != nullptr){
+            dbfun.vote(jobj["upvote"], "upvote");
+        }
+
+        else if (jobj["downvote"] != nullptr){
+            dbfun.vote(jobj["downvote"], "downvote");
+        }
+
+
     }
 
 }

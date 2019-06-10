@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD 11)
 include_directories(libpqxx_build/include)
 include_directories(libpqxx/include)
 
-add_executable(partiapolityczna main.cpp json.hpp InputReader.cpp InputReader.h)
+add_executable(partiapolityczna main.cpp json.hpp InputReader.cpp InputReader.h DatabaseFunctions.cpp DatabaseFunctions.h)
 
 find_library(PQXX_LIBRARY pqxx libpqxx_build/src)
 target_link_libraries(partiapolityczna LINK_PUBLIC ${PQXX_LIBRARY})

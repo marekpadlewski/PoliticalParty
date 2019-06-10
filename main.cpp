@@ -5,7 +5,7 @@
 
 using json = nlohmann::json;
 
-int main() {
+int main(int argc, char * argv[]) {
 
 /*
 
@@ -51,7 +51,33 @@ int main() {
 
     InputReader inputReader;
 
-    inputReader.readCommands();
+    inputReader.dbfun = DatabaseFunctions();
+
+
+    //INIT user
+    if (argc == 2){
+        std::string arg = argv[1];
+
+        if (arg == "--init"){
+            std::cout << "INIT" << std::endl;
+            inputReader.readInit();
+        }
+
+
+        else{
+            std::cerr << "Wrong arguments!";
+            return -1;
+        }
+    }
+
+    //APP user
+    else{
+        std::cout << "APP" << std::endl;
+
+        inputReader.readApp();
+    }
+
+
 
 
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "json.hpp"
+#include "DatabaseFunctions.h"
 
 
 class InputReader {
@@ -8,7 +9,13 @@ class InputReader {
 public:
     InputReader();
 
-    void readCommands();
+    void readInit();
+    void readApp();
+
+    DatabaseFunctions dbfun;
+
+private:
+
 
 };
 

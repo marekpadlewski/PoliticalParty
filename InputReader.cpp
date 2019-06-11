@@ -53,6 +53,14 @@ void InputReader::readApp() {
             dbfun.vote(jobj["downvote"], "downvote");
         }
 
+        else if (jobj["actions"] != nullptr){
+            dbfun.actions(jobj["actions"]);
+        }
+
+        else if (jobj["projects"] != nullptr){
+            dbfun.projects(jobj["projects"]);
+        }
+
 
     }
 

@@ -32,7 +32,7 @@ void DatabaseFunctions::leader(nlohmann::json jobj) {
         W.exec("INSERT INTO takenid VALUES (" + std::to_string(id) + ")");
 
 
-        W.exec("INSERT INTO members (id, password, timestamp) VALUES (" + std::to_string(id) + ", '" + pass + "', " + std::to_string(ts) + ")");
+        W.exec("INSERT INTO members (id, password, timestamp, isleader) VALUES (" + std::to_string(id) + ", '" + pass + "', " + std::to_string(ts) + "', " + std::to_string(true) + ")");
 
         W.commit();
 
@@ -48,7 +48,7 @@ void DatabaseFunctions::leader(nlohmann::json jobj) {
 void DatabaseFunctions::createAction(nlohmann::json jobj, std::string type) {
     bool flag = true;
 
-    int memid = jobj["member"];
+    int memberid = jobj["member"];
     long ts = jobj["timestamp"];
     std::string mempass = jobj["password"];
     int actionid = jobj["action"];
@@ -59,19 +59,19 @@ void DatabaseFunctions::createAction(nlohmann::json jobj, std::string type) {
 
     pqxx::result R;
 
-    R = W.exec("SELECT id, password FROM members WHERE id = " + std::to_string(memid));
+    R = W.exec("SELECT id, password FROM members WHERE id = " + std::to_string(memberid));
     //if such member doesnt exist
     if (R.empty()){
 
         //check if memberid is taken
-        R = W.exec("SELECT id FROM takenid WHERE id = " + std::to_string(memid));
+        R = W.exec("SELECT id FROM takenid WHERE id = " + std::to_string(memberid));
 
         //is not taken
         if (R.empty()){
             //we can create new member
-            W.exec("INSERT INTO takenid VALUES (" + std::to_string(memid) + ")");
-            W.exec("INSERT INTO members (id, password, timestamp) "
-                   "VALUES (" + std::to_string(memid) + ", '" + mempass + "', " + std::to_string(ts) + ")");
+            W.exec("INSERT INTO takenid VALUES (" + std::to_string(memberid) + ")");
+            W.exec("INSERT INTO members (id, password, timestamp, isleader) "
+                   "VALUES (" + std::to_string(memberid) + ", '" + mempass + "', " + std::to_string(ts) + "', " + std::to_string(false) + ")");
         }
 
         else{
@@ -85,7 +85,6 @@ void DatabaseFunctions::createAction(nlohmann::json jobj, std::string type) {
     else{
         std::string currMemPass = R[0][1].as<std::string>();
 
-
         //check if password is not correct
         if (currMemPass != mempass){
             flag = false;
@@ -95,7 +94,7 @@ void DatabaseFunctions::createAction(nlohmann::json jobj, std::string type) {
         //password is correct
         else{
             //check if member is frozen
-            R = W.exec("SELECT timestamp FROM members WHERE id = " + std::to_string(memid));
+            R = W.exec("SELECT timestamp FROM members WHERE id = " + std::to_string(memberid));
 
             auto lastTS = R[0][0].as<long>();
 
@@ -106,9 +105,8 @@ void DatabaseFunctions::createAction(nlohmann::json jobj, std::string type) {
 
             else {
                 //update timestamp of member
-                W.exec("UPDATE members SET timestamp = " + std::to_string(ts) + " WHERE id = " + std::to_string(memid));
+                W.exec("UPDATE members SET timestamp = " + std::to_string(ts) + " WHERE id = " + std::to_string(memberid));
             }
-
         }
     }
 
@@ -132,7 +130,7 @@ void DatabaseFunctions::createAction(nlohmann::json jobj, std::string type) {
 
             if (R.empty()){
                 W.exec("INSERT INTO actions "
-                           "VALUES (" + std::to_string(actionid) + ", " + std::to_string(projectid)  + ", " + std::to_string(memid) + ", " + std::to_string(authid) + ", '" + type + "', " + std::to_string(ts) + ", 0, 0)");
+                           "VALUES (" + std::to_string(actionid) + ", " + std::to_string(projectid)  + ", " + std::to_string(memberid) + ", " + std::to_string(authid) + ", '" + type + "', " + std::to_string(ts) + ", 0, 0)");
 
                 W.exec("INSERT INTO takenid VALUES (" + std::to_string(actionid) + ")");
             }
@@ -141,9 +139,7 @@ void DatabaseFunctions::createAction(nlohmann::json jobj, std::string type) {
                 flag = false;
                 std::cout << "ER 5" << std::endl;
             }
-
         }
-
     }
 
     else if (flag){
@@ -160,7 +156,7 @@ void DatabaseFunctions::createAction(nlohmann::json jobj, std::string type) {
 
 
             W.exec("INSERT INTO actions "
-                       "VALUES (" + std::to_string(actionid) + ", " + std::to_string(projectid)  + ", " + std::to_string(memid) + ", " + std::to_string(authorityid) + ", '" + type + "', " + std::to_string(ts) + ", 0, 0)");
+                       "VALUES (" + std::to_string(actionid) + ", " + std::to_string(projectid)  + ", " + std::to_string(memberid) + ", " + std::to_string(authorityid) + ", '" + type + "', " + std::to_string(ts) + ", 0, 0)");
 
             W.exec("INSERT INTO takenid VALUES (" + std::to_string(projectid) + ")");
             W.exec("INSERT INTO takenid VALUES (" + std::to_string(actionid) + ")");
@@ -173,10 +169,7 @@ void DatabaseFunctions::createAction(nlohmann::json jobj, std::string type) {
             std::cout << "ER 6" << std::endl;
         }
 
-
-
     }
-
 
     //all is correct
     if (flag){
@@ -193,7 +186,7 @@ void DatabaseFunctions::createAction(nlohmann::json jobj, std::string type) {
 void DatabaseFunctions::vote(nlohmann::json jobj, std::string type) {
     bool flag = true;
 
-    int memid = jobj["member"];
+    int memberid = jobj["member"];
     long ts = jobj["timestamp"];
     std::string mempass = jobj["password"];
     int actionid = jobj["action"];
@@ -203,19 +196,19 @@ void DatabaseFunctions::vote(nlohmann::json jobj, std::string type) {
 
     pqxx::result R;
 
-    R = W.exec("SELECT id, password FROM members WHERE id = " + std::to_string(memid));
+    R = W.exec("SELECT id, password FROM members WHERE id = " + std::to_string(memberid));
     //if such member doesnt exist
     if (R.empty()){
 
         //check if memberid is taken
-        R = W.exec("SELECT id FROM takenid WHERE id = " + std::to_string(memid));
+        R = W.exec("SELECT id FROM takenid WHERE id = " + std::to_string(memberid));
 
         //is not taken
         if (R.empty()){
             //we can create new member
-            W.exec("INSERT INTO takenid VALUES (" + std::to_string(memid) + ")");
-            W.exec("INSERT INTO members (id, password, timestamp) "
-                   "VALUES (" + std::to_string(memid) + ", '" + mempass + "', " + std::to_string(ts) + ")");
+            W.exec("INSERT INTO takenid VALUES (" + std::to_string(memberid) + ")");
+            W.exec("INSERT INTO members (id, password, timestamp, isleader) "
+                   "VALUES (" + std::to_string(memberid) + ", '" + mempass + "', " + std::to_string(ts) + "', " + std::to_string(false) + ")");
         }
 
         else{
@@ -239,7 +232,7 @@ void DatabaseFunctions::vote(nlohmann::json jobj, std::string type) {
             //password is correct
         else{
             //check if member is frozen
-            R = W.exec("SELECT timestamp FROM members WHERE id = " + std::to_string(memid));
+            R = W.exec("SELECT timestamp FROM members WHERE id = " + std::to_string(memberid));
 
             auto lastTS = R[0][0].as<long>();
 
@@ -250,9 +243,8 @@ void DatabaseFunctions::vote(nlohmann::json jobj, std::string type) {
 
             else {
                 //update timestamp of member
-                W.exec("UPDATE members SET timestamp = " + std::to_string(ts) + " WHERE id = " + std::to_string(memid));
+                W.exec("UPDATE members SET timestamp = " + std::to_string(ts) + " WHERE id = " + std::to_string(memberid));
             }
-
         }
     }
 
@@ -269,18 +261,16 @@ void DatabaseFunctions::vote(nlohmann::json jobj, std::string type) {
         else{
             //check if member already voted for this action
 
-            R = W.exec("SELECT * FROM votes WHERE actionid = " + std::to_string(actionid) + " AND memberid = " + std::to_string(memid));
+            R = W.exec("SELECT * FROM votes WHERE actionid = " + std::to_string(actionid) + " AND memberid = " + std::to_string(memberid));
 
             if (R.empty()){
                 //not voted
-                W.exec("INSERT INTO votes VALUES (" + std::to_string(actionid) + ", " + std::to_string(memid) + ", '" + type + "')");
+                W.exec("INSERT INTO votes VALUES (" + std::to_string(actionid) + ", " + std::to_string(memberid) + ", '" + type + "')");
 
                 if (type == "upvote")
                     W.exec("UPDATE actions SET upvotes = upvotes + 1 WHERE id = " + std::to_string(actionid));
                 else if (type == "downvote")
                     W.exec("UPDATE actions SET downvotes = downvotes + 1 WHERE id = " + std::to_string(actionid));
-
-
             }
 
             else{
@@ -290,7 +280,6 @@ void DatabaseFunctions::vote(nlohmann::json jobj, std::string type) {
             }
         }
     }
-
 
     //all is correct
     if (flag){
@@ -306,10 +295,152 @@ void DatabaseFunctions::vote(nlohmann::json jobj, std::string type) {
 
 
 void DatabaseFunctions::actions(nlohmann::json jobj) {
+    bool flag = true;
+
+    long ts = jobj["timestamp"];
+    int memberid = jobj["member"];
+    std::string mempass = jobj["password"];
+
+    std::string condition = "WHERE m.id = " + std::to_string(memberid) + " AND m.password = '" + mempass + "' AND m.isleader = true";
+
+    if (jobj["type"] != nullptr){
+        std::string type = jobj["type"];
+        std::string s1 = " AND type = '" + type + "'";
+        condition += s1;
+    }
+
+    if (jobj["project"] != nullptr){
+        int project = jobj["project"];
+        std::string s2 = " AND projectid = '" + std::to_string(project) + "'";
+        condition += s2;
+    }
+
+    if (jobj["authority"] != nullptr){
+        int authority = jobj["authority"];
+        std::string s3 = " AND authorityid = '" + std::to_string(authority) + "'";
+        condition += s3;
+    }
+
+
+    pqxx::connection C("dbname=dbtest1");
+    pqxx::work W(C);
+
+    pqxx::result R;
+
+    R =  W.exec("SELECT id FROM members WHERE id = " + std::to_string(memberid) + " AND password = '" + mempass + "' AND isleader = true");
+
+    //if member data is incorrect
+    if (R.empty()){
+        flag = false;
+    }
+
+    else{
+        //check if member is frozen
+        R = W.exec("SELECT timestamp FROM members WHERE id = " + std::to_string(memberid));
+
+        auto lastTS = R[0][0].as<long>();
+
+        if (isFrozen(lastTS, ts)){
+            flag = false;
+
+        }
+
+        else
+            W.exec("UPDATE members SET timestamp = " + std::to_string(ts) + "WHERE id = " + std::to_string(memberid));
+    }
+
+    if (flag){
+        R = W.exec("SELECT actions.id, type, projectid, authorityid, upvotes, downvotes "
+                   "FROM actions "
+                   "JOIN members m ON m.id = actions.memberid " + condition + " ORDER BY actions.id");
+
+
+
+        std::cout << "Found " << R.size() << " rows" << std::endl;
+
+        for (auto row: R){
+            for (auto &&i : row) {
+                std::cout << i.c_str() << " ";
+            }
+            std::cout << std::endl;
+        }
+
+        W.commit();
+        std::cout << confirmation << std::endl;
+    }
+
+    else{
+        std::cout << negation << std::endl;
+    }
 
 }
 
 void DatabaseFunctions::projects(nlohmann::json jobj) {
+    bool flag = true;
+
+    long ts = jobj["timestamp"];
+    int memberid = jobj["member"];
+    std::string mempass = jobj["password"];
+
+    std::string condition;
+
+
+    if (jobj["authority"] != nullptr){
+        int authority = jobj["authority"];
+        std::string s3 = " WHERE authorityid = '" + std::to_string(authority) + "'";
+        condition += s3;
+    }
+
+
+    pqxx::connection C("dbname=dbtest1");
+    pqxx::work W(C);
+
+    pqxx::result R;
+
+    R =  W.exec("SELECT id FROM members WHERE id = " + std::to_string(memberid) + " AND password = '" + mempass + "' AND isleader = true");
+
+    //if member data is incorrect
+    if (R.empty()){
+        flag = false;
+    }
+
+    else{
+        //check if member is frozen
+        R = W.exec("SELECT timestamp FROM members WHERE id = " + std::to_string(memberid));
+
+        auto lastTS = R[0][0].as<long>();
+
+        if (isFrozen(lastTS, ts)){
+            flag = false;
+
+        }
+
+        else
+            W.exec("UPDATE members SET timestamp = " + std::to_string(ts) + "WHERE id = " + std::to_string(memberid));
+    }
+
+    if (flag){
+        R = W.exec("SELECT id, authorityid "
+                   "FROM projects " + condition + "ORDER BY id");
+
+
+
+        std::cout << "Found " << R.size() << " rows" << std::endl;
+
+        for (auto row: R){
+            for (auto &&i : row) {
+                std::cout << i.c_str() << " ";
+            }
+            std::cout << std::endl;
+        }
+
+        W.commit();
+        std::cout << confirmation << std::endl;
+    }
+
+    else{
+        std::cout << negation << std::endl;
+    }
 
 }
 

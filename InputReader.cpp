@@ -65,6 +65,10 @@ void InputReader::readApp() {
             dbfun.votes(jobj["votes"]);
         }
 
+        else if (jobj["trolls"] != nullptr){
+            dbfun.trolls(jobj["trolls"]);
+        }
+
 
     }
 

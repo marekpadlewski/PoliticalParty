@@ -32,7 +32,7 @@ void DatabaseFunctions::leader(nlohmann::json jobj) {
         W.exec("INSERT INTO takenid VALUES (" + std::to_string(id) + ")");
 
 
-        W.exec("INSERT INTO members (id, password, timestamp, isleader) VALUES (" + std::to_string(id) + ", '" + pass + "', " + std::to_string(ts) + "', " + std::to_string(true) + ")");
+        W.exec("INSERT INTO members (id, password, timestamp, isleader) VALUES (" + std::to_string(id) + ", '" + pass + "', " + std::to_string(ts) + "', true)");
 
         W.commit();
 
@@ -71,13 +71,12 @@ void DatabaseFunctions::createAction(nlohmann::json jobj, std::string type) {
             //we can create new member
             W.exec("INSERT INTO takenid VALUES (" + std::to_string(memberid) + ")");
             W.exec("INSERT INTO members (id, password, timestamp, isleader) "
-                   "VALUES (" + std::to_string(memberid) + ", '" + mempass + "', " + std::to_string(ts) + "', " + std::to_string(false) + ")");
+                   "VALUES (" + std::to_string(memberid) + ", '" + mempass + "', " + std::to_string(ts) + ", false)");
         }
 
         else{
             //memberid is taken
             flag = false;
-            std::cout << "ER 1" << std::endl;
         }
     }
 
@@ -88,7 +87,6 @@ void DatabaseFunctions::createAction(nlohmann::json jobj, std::string type) {
         //check if password is not correct
         if (currMemPass != mempass){
             flag = false;
-            std::cout << "ER 2" << std::endl;
         }
 
         //password is correct
@@ -100,7 +98,6 @@ void DatabaseFunctions::createAction(nlohmann::json jobj, std::string type) {
 
             if (isFrozen(lastTS, ts)){
                 flag = false;
-                std::cout << "ER 3" << std::endl;
             }
 
             else {
@@ -117,7 +114,6 @@ void DatabaseFunctions::createAction(nlohmann::json jobj, std::string type) {
         //if doesnt exist
         if (R.empty()){
             flag = false;
-            std::cout << "ER 4" << std::endl;
         }
 
         //project already exist
@@ -137,7 +133,6 @@ void DatabaseFunctions::createAction(nlohmann::json jobj, std::string type) {
 
             else{
                 flag = false;
-                std::cout << "ER 5" << std::endl;
             }
         }
     }
@@ -166,7 +161,6 @@ void DatabaseFunctions::createAction(nlohmann::json jobj, std::string type) {
 
         else{
             flag = false;
-            std::cout << "ER 6" << std::endl;
         }
 
     }
@@ -208,13 +202,12 @@ void DatabaseFunctions::vote(nlohmann::json jobj, std::string type) {
             //we can create new member
             W.exec("INSERT INTO takenid VALUES (" + std::to_string(memberid) + ")");
             W.exec("INSERT INTO members (id, password, timestamp, isleader) "
-                   "VALUES (" + std::to_string(memberid) + ", '" + mempass + "', " + std::to_string(ts) + "', " + std::to_string(false) + ")");
+                   "VALUES (" + std::to_string(memberid) + ", '" + mempass + "', " + std::to_string(ts) + ", false)");
         }
 
         else{
             //memberid is taken
             flag = false;
-            std::cout << "ER 1" << std::endl;
         }
     }
 
@@ -226,7 +219,6 @@ void DatabaseFunctions::vote(nlohmann::json jobj, std::string type) {
         //check if password is not correct
         if (currMemPass != mempass){
             flag = false;
-            std::cout << "ER 2" << std::endl;
         }
 
             //password is correct
@@ -238,7 +230,6 @@ void DatabaseFunctions::vote(nlohmann::json jobj, std::string type) {
 
             if (isFrozen(lastTS, ts)){
                 flag = false;
-                std::cout << "ER 3" << std::endl;
             }
 
             else {
@@ -254,7 +245,6 @@ void DatabaseFunctions::vote(nlohmann::json jobj, std::string type) {
         //if doesnt exist
         if (R.empty()){
             flag = false;
-            std::cout << "ER 4" << std::endl;
         }
 
             //action already exist
@@ -276,7 +266,6 @@ void DatabaseFunctions::vote(nlohmann::json jobj, std::string type) {
             else{
                 //already voted
                 flag = false;
-                std::cout << "ER 5" << std::endl;
             }
         }
     }
@@ -301,7 +290,7 @@ void DatabaseFunctions::actions(nlohmann::json jobj) {
     int memberid = jobj["member"];
     std::string mempass = jobj["password"];
 
-    std::string condition = "WHERE m.id = " + std::to_string(memberid) + " AND m.password = '" + mempass + "' AND m.isleader = true";
+    std::string condition = "WHERE true ";
 
     if (jobj["type"] != nullptr){
         std::string type = jobj["type"];
@@ -355,18 +344,29 @@ void DatabaseFunctions::actions(nlohmann::json jobj) {
                    "JOIN members m ON m.id = actions.memberid " + condition + " ORDER BY actions.id");
 
 
+        nlohmann::json res;
+        res["status"] = "OK";
 
-        std::cout << "Found " << R.size() << " rows" << std::endl;
+        nlohmann::json l, d;
 
         for (auto row: R){
-            for (auto &&i : row) {
-                std::cout << i.c_str() << " ";
+            l.clear();
+            for (int i = 0 ; i < row.size() ; i++) {
+
+                if (i == 1)
+                    l.push_back(row[i].as<std::string>());
+                else
+                    l.push_back(row[i].as<int>());
             }
-            std::cout << std::endl;
+
+            d.push_back(l);
         }
 
+        res["data"] = d;
+
+        std::cout << res << std::endl;
+
         W.commit();
-        std::cout << confirmation << std::endl;
     }
 
     else{
@@ -423,19 +423,25 @@ void DatabaseFunctions::projects(nlohmann::json jobj) {
         R = W.exec("SELECT id, authorityid "
                    "FROM projects " + condition + " ORDER BY id");
 
+        nlohmann::json res;
+        res["status"] = "OK";
 
-
-        std::cout << "Found " << R.size() << " rows" << std::endl;
+        nlohmann::json l, d;
 
         for (auto row: R){
-            for (auto &&i : row) {
-                std::cout << i.c_str() << " ";
+            l.clear();
+            for (int i = 0 ; i < row.size() ; i++) {
+                l.push_back(row[i].as<int>());
             }
-            std::cout << std::endl;
+
+            d.push_back(l);
         }
 
+        res["data"] = d;
+
+        std::cout << res << std::endl;
+
         W.commit();
-        std::cout << confirmation << std::endl;
     }
 
     else{
@@ -445,28 +451,26 @@ void DatabaseFunctions::projects(nlohmann::json jobj) {
 }
 
 void DatabaseFunctions::votes(nlohmann::json jobj) {
-    bool flag = true, p = false;
+    bool flag = true;
 
     long ts = jobj["timestamp"];
     int memberid = jobj["member"];
     std::string mempass = jobj["password"];
 
-    std::string condition;
+    std::string condition1, condition2;
 
     if (jobj["project"] != nullptr){
         int projectid = jobj["project"];
-        std::string s1 = " JOIN actions a ON a.id = v.actionid WHERE a.projectid = " + std::to_string(projectid);
-        condition += s1;
-        p = true;
+        condition1 = " LEFT JOIN actions a ON a.id = v.actionid";
+        std::string s1 = " AND a.projectid = " + std::to_string(projectid);
+        condition2 += s1;
     }
 
     if (jobj["action"] != nullptr){
         int actionid = jobj["action"];
-        std::string s2 = " actionid = " + std::to_string(actionid);
+        std::string s2 = " AND v.actionid = " + std::to_string(actionid);
 
-        condition += (p ? " AND " : " WHERE ");
-
-        condition += s2;
+        condition2 += s2;
     }
 
 
@@ -497,24 +501,30 @@ void DatabaseFunctions::votes(nlohmann::json jobj) {
     }
 
     if (flag){
-        R = W.exec("SELECT v.memberid, "
-                   "COUNT (v.type) FILTER (WHERE v.type = 'upvote') AS num_upvotes, "
-                   "COUNT (v.type) FILTER (WHERE v.type = 'downvote') AS num_downvotes "
-                   "FROM votes v " + condition + " GROUP BY v.memberid " " ORDER BY v.memberid");
+        R = W.exec("SELECT m.id, "
+                   "COUNT (v.type) FILTER (WHERE v.type = 'upvote'" + condition2 + ") AS num_upvotes, "
+                   "COUNT (v.type) FILTER (WHERE v.type = 'downvote'" + condition2 + ") AS num_downvotes "
+                   "FROM votes v FULL OUTER JOIN members m ON m.id = v.memberid " + condition1 + " GROUP BY m.id  ORDER BY 1");
 
+        nlohmann::json res;
+        res["status"] = "OK";
 
-
-        std::cout << "Found " << R.size() << " rows" << std::endl;
+        nlohmann::json l, d;
 
         for (auto row: R){
-            for (auto &&i : row) {
-                std::cout << i.c_str() << " ";
+            l.clear();
+            for (int i = 0 ; i < row.size() ; i++) {
+                l.push_back(row[i].as<int>());
             }
-            std::cout << std::endl;
+
+            d.push_back(l);
         }
 
+        res["data"] = d;
+
+        std::cout << res << std::endl;
+
         W.commit();
-        std::cout << confirmation << std::endl;
     }
 
     else{
@@ -525,12 +535,50 @@ void DatabaseFunctions::votes(nlohmann::json jobj) {
 }
 
 void DatabaseFunctions::trolls(nlohmann::json jobj) {
+    bool flag = true;
 
+    long ts = jobj["timestamp"];
+
+
+    pqxx::connection C("dbname=dbtest1");
+    pqxx::work W(C);
+
+    pqxx::result R;
+
+    R = W.exec("SELECT * FROM (SELECT memberid, SUM(upvotes) AS num_upvotes, SUM(downvotes) "
+               "AS num_downvotes, CASE WHEN " + std::to_string(ts) +
+               " BETWEEN m.timestamp AND m.timestamp + 31556900000 "
+               " THEN true ELSE false END AS active FROM actions JOIN members m ON m.id = actions.memberid "
+               " GROUP BY memberid, m.timestamp) AS trolls WHERE num_upvotes < num_downvotes "
+               " ORDER BY num_downvotes-num_upvotes DESC, memberid");
+
+
+    nlohmann::json res;
+    res["status"] = "OK";
+
+    nlohmann::json l, d;
+
+    for (auto row: R){
+        l.clear();
+        for (int i = 0 ; i < 3 ; i++) {
+            l.push_back(row[i].as<int>());
+        }
+
+
+        l.push_back(row[3].as<bool>() ? "true" : "false");
+        d.push_back(l);
+    }
+
+    res["data"] = d;
+
+    std::cout << res << std::endl;
 }
+
 
 bool DatabaseFunctions::isFrozen(long lastTS, long currTS) {
 
-    return currTS - lastTS > 31556908800;
+                            //one year in milliseconds
+    return currTS - lastTS > 31556900000;
 
 }
 

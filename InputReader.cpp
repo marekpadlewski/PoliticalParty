@@ -12,8 +12,6 @@ void InputReader::readInit() {
 
         json jobj = json::parse(line);
 
-
-
         if (jobj["leader"] != nullptr){
 
             dbfun.leader(jobj["leader"]);
@@ -23,7 +21,6 @@ void InputReader::readInit() {
 
             dbfun.open(jobj["open"]);
         }
-
 
     }
 
@@ -68,10 +65,11 @@ void InputReader::readApp() {
         else if (jobj["trolls"] != nullptr){
             dbfun.trolls(jobj["trolls"]);
         }
+        else if (jobj["open"] != nullptr){
 
-
+            dbfun.open(jobj["open"]);
+        }
     }
-
 }
 
 InputReader::InputReader() = default;

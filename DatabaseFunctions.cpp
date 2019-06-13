@@ -1,4 +1,5 @@
 
+#include <fstream>
 #include "DatabaseFunctions.h"
 
 DatabaseFunctions::DatabaseFunctions() {
@@ -7,9 +8,59 @@ DatabaseFunctions::DatabaseFunctions() {
     negation["status"] = "ERROR";
 }
 
-void DatabaseFunctions::open(nlohmann::json jobj) {
+void DatabaseFunctions::openInit(nlohmann::json jobj) {
 
-    std::cout << confirmation << std::endl;
+    std::string login = jobj["login"];
+    std::string password = jobj["password"];
+    std::string dbname = jobj["database"];
+
+    if (login == "init" && password == "qwerty"){
+        std::ifstream f("dbinit.sql");
+        std::stringstream buffer;
+        buffer << f.rdbuf();
+
+        pqxx::connection C("dbname=" + dbname + " host=localhost user=" + login + " password=" + password);
+        pqxx::work W(C);
+
+        db_name = dbname;
+
+        //create all tables, relations etc
+        pqxx::result R = W.exec(buffer.str());
+
+        //create user app
+        R = W.exec("CREATE USER app WITH ENCRYPTED PASSWORD 'qwerty'");
+        R = W.exec("GRANT ALL PRIVILEGES ON DATABASE " + dbname + " TO app");
+        R = W.exec("ALTER USER app WITH SUPERUSER");
+        
+        W.commit();
+
+
+        std::cout << confirmation << std::endl;
+    }
+
+    else{
+        std::cout << negation << std::endl;
+    }
+
+
+
+}
+
+void DatabaseFunctions::openApp(nlohmann::json jobj) {
+
+    std::string login = jobj["login"];
+    std::string password = jobj["password"];
+    std::string dbname = jobj["database"];
+
+
+    if (login == "app" && password == "qwerty"){
+        db_name = dbname;
+        std::cout << confirmation << std::endl;
+    }
+
+    else{
+        std::cout << negation << std::endl;
+    }
 
 }
 
@@ -19,7 +70,7 @@ void DatabaseFunctions::leader(nlohmann::json jobj) {
     long ts = jobj["timestamp"];
     std::string pass = jobj["password"];
 
-    pqxx::connection C("dbname=dbtest1");
+    pqxx::connection C("dbname=" + db_name + " host=localhost user=init password=qwerty");
     pqxx::work W(C);
 
     //check if memberid is taken
@@ -45,7 +96,7 @@ void DatabaseFunctions::leader(nlohmann::json jobj) {
     }
 }
 
-void DatabaseFunctions::createAction(nlohmann::json jobj, std::string type) {
+void DatabaseFunctions::createAction(nlohmann::json jobj, const std::string &type) {
     bool flag = true;
 
     int memberid = jobj["member"];
@@ -54,7 +105,7 @@ void DatabaseFunctions::createAction(nlohmann::json jobj, std::string type) {
     int actionid = jobj["action"];
     int projectid = jobj["project"];
 
-    pqxx::connection C("dbname=dbtest1");
+    pqxx::connection C("dbname=" + db_name + " host=localhost user=app password=qwerty");
     pqxx::work W(C);
 
     pqxx::result R;
@@ -199,7 +250,7 @@ void DatabaseFunctions::createAction(nlohmann::json jobj, std::string type) {
     }
 }
 
-void DatabaseFunctions::vote(nlohmann::json jobj, std::string type) {
+void DatabaseFunctions::vote(nlohmann::json jobj, const std::string &type) {
     bool flag = true;
 
     int memberid = jobj["member"];
@@ -207,7 +258,7 @@ void DatabaseFunctions::vote(nlohmann::json jobj, std::string type) {
     std::string mempass = jobj["password"];
     int actionid = jobj["action"];
 
-    pqxx::connection C("dbname=dbtest1");
+    pqxx::connection C("dbname=" + db_name + " host=localhost user=app password=qwerty");
     pqxx::work W(C);
 
     pqxx::result R;
@@ -313,26 +364,26 @@ void DatabaseFunctions::actions(nlohmann::json jobj) {
 
     std::string condition = "WHERE true ";
 
-    if (jobj["type"] != nullptr){
+    if (!jobj["type"].is_null()){
         std::string type = jobj["type"];
         std::string s1 = " AND type = '" + type + "'";
         condition += s1;
     }
 
-    if (jobj["project"] != nullptr){
+    if (!jobj["project"].is_null()){
         int project = jobj["project"];
         std::string s2 = " AND projectid = " + std::to_string(project);
         condition += s2;
     }
 
-    if (jobj["authority"] != nullptr){
+    if (!jobj["authority"].is_null()){
         int authority = jobj["authority"];
         std::string s3 = " AND authorityid = " + std::to_string(authority);
         condition += s3;
     }
 
 
-    pqxx::connection C("dbname=dbtest1");
+    pqxx::connection C("dbname=" + db_name + " host=localhost user=app password=qwerty");
     pqxx::work W(C);
 
     pqxx::result R;
@@ -412,14 +463,14 @@ void DatabaseFunctions::projects(nlohmann::json jobj) {
     std::string condition;
 
 
-    if (jobj["authority"] != nullptr){
+    if (!jobj["authority"].is_null()){
         int authority = jobj["authority"];
         std::string s1 = " WHERE authorityid = " + std::to_string(authority);
         condition += s1;
     }
 
 
-    pqxx::connection C("dbname=dbtest1");
+    pqxx::connection C("dbname=" + db_name + " host=localhost user=app password=qwerty");
     pqxx::work W(C);
 
     pqxx::result R;
@@ -489,14 +540,14 @@ void DatabaseFunctions::votes(nlohmann::json jobj) {
 
     std::string condition1, condition2;
 
-    if (jobj["project"] != nullptr){
+    if (!jobj["project"].is_null()){
         int projectid = jobj["project"];
         condition1 = " LEFT JOIN actions a ON a.id = v.actionid";
         std::string s1 = " AND a.projectid = " + std::to_string(projectid);
         condition2 += s1;
     }
 
-    if (jobj["action"] != nullptr){
+    if (!jobj["action"].is_null()){
         int actionid = jobj["action"];
         std::string s2 = " AND v.actionid = " + std::to_string(actionid);
 
@@ -504,7 +555,7 @@ void DatabaseFunctions::votes(nlohmann::json jobj) {
     }
 
 
-    pqxx::connection C("dbname=dbtest1");
+    pqxx::connection C("dbname=" + db_name + " host=localhost user=app password=qwerty");
     pqxx::work W(C);
 
     pqxx::result R;
@@ -572,8 +623,7 @@ void DatabaseFunctions::trolls(nlohmann::json jobj) {
 
     long ts = jobj["timestamp"];
 
-
-    pqxx::connection C("dbname=dbtest1");
+    pqxx::connection C("dbname=" + db_name + " host=localhost user=app password=qwerty");
     pqxx::work W(C);
 
     pqxx::result R;

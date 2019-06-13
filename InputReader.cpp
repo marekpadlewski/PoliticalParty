@@ -12,18 +12,16 @@ void InputReader::readInit() {
 
         json jobj = json::parse(line);
 
-        if (jobj["leader"] != nullptr){
+        if (!jobj["leader"].is_null()){
 
             dbfun.leader(jobj["leader"]);
         }
 
-        else if (jobj["open"] != nullptr){
+        else if (!jobj["open"].is_null()){
 
-            dbfun.open(jobj["open"]);
+            dbfun.openInit(jobj["open"]);
         }
-
     }
-
 }
 
 void InputReader::readApp() {
@@ -34,40 +32,40 @@ void InputReader::readApp() {
 
         json jobj = json::parse(line);
 
-        if (jobj["protest"] != nullptr){
+        if (!jobj["protest"].is_null()){
             dbfun.createAction(jobj["protest"], "protest");
         }
 
-        else if (jobj["support"] != nullptr){
+        else if (!jobj["support"].is_null()){
             dbfun.createAction(jobj["support"], "support");
         }
 
-        else if (jobj["upvote"] != nullptr){
+        else if (!jobj["upvote"].is_null()){
             dbfun.vote(jobj["upvote"], "upvote");
         }
 
-        else if (jobj["downvote"] != nullptr){
+        else if (!jobj["downvote"].is_null()){
             dbfun.vote(jobj["downvote"], "downvote");
         }
 
-        else if (jobj["actions"] != nullptr){
+        else if (!jobj["actions"].is_null()){
             dbfun.actions(jobj["actions"]);
         }
 
-        else if (jobj["projects"] != nullptr){
+        else if (!jobj["projects"].is_null()){
             dbfun.projects(jobj["projects"]);
         }
 
-        else if (jobj["votes"] != nullptr){
+        else if (!jobj["votes"].is_null()){
             dbfun.votes(jobj["votes"]);
         }
 
-        else if (jobj["trolls"] != nullptr){
+        else if (!jobj["trolls"].is_null()){
             dbfun.trolls(jobj["trolls"]);
         }
-        else if (jobj["open"] != nullptr){
+        else if (!jobj["open"].is_null()){
 
-            dbfun.open(jobj["open"]);
+            dbfun.openApp(jobj["open"]);
         }
     }
 }

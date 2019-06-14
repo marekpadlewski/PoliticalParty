@@ -1,4 +1,3 @@
-
 #include <fstream>
 #include "DatabaseFunctions.h"
 
@@ -27,11 +26,13 @@ void DatabaseFunctions::openInit(nlohmann::json jobj) {
         //create all tables, relations etc
         pqxx::result R = W.exec(buffer.str());
 
+
         //create user app
         R = W.exec("CREATE USER app WITH ENCRYPTED PASSWORD 'qwerty'");
         R = W.exec("GRANT ALL PRIVILEGES ON DATABASE " + dbname + " TO app");
         R = W.exec("ALTER USER app WITH SUPERUSER");
-        
+
+
         W.commit();
 
 
@@ -41,8 +42,6 @@ void DatabaseFunctions::openInit(nlohmann::json jobj) {
     else{
         std::cout << negation << std::endl;
     }
-
-
 
 }
 
@@ -128,7 +127,6 @@ void DatabaseFunctions::createAction(nlohmann::json jobj, const std::string &typ
         else{
             //memberid is taken
             flag = false;
-            std::cout << "DEBUG 1 ";
         }
     }
 
@@ -139,7 +137,6 @@ void DatabaseFunctions::createAction(nlohmann::json jobj, const std::string &typ
         //check if password is not correct
         if (R.empty()){
             flag = false;
-            std::cout << "DEBUG 2 ";
         }
 
         //password is correct
@@ -151,7 +148,6 @@ void DatabaseFunctions::createAction(nlohmann::json jobj, const std::string &typ
 
             if (isFrozen(lastTS, ts)){
                 flag = false;
-                std::cout << "DEBUG 3 ";
             }
 
             else {
@@ -207,7 +203,6 @@ void DatabaseFunctions::createAction(nlohmann::json jobj, const std::string &typ
 
             else{
                 flag = false;
-                std::cout << "DEBUG 4 ";
             }
 
         }
@@ -232,7 +227,6 @@ void DatabaseFunctions::createAction(nlohmann::json jobj, const std::string &typ
 
             else{
                 flag = false;
-                std::cout << "DEBUG 5 ";
             }
         }
     }

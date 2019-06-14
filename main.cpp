@@ -11,7 +11,6 @@ int main(int argc, char * argv[]) {
 
     inputReader.dbfun = DatabaseFunctions();
 
-
     //INIT user
     if (argc == 2){
         std::string arg = argv[1];
@@ -31,10 +30,6 @@ int main(int argc, char * argv[]) {
     else{
         inputReader.readApp();
     }
-
-
-
-
 
     return 0;
 }

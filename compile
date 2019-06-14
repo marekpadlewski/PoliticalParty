@@ -1,0 +1,22 @@
+#!/bin/sh
+#bash script that build and compile project
+#you have to install cmake
+#it will take a while to build and compile all the stuff
+
+sudo apt install libpq-dev
+
+mkdir libpqxx_build
+cd libpqxx_build
+cmake -DPostgreSQL_TYPE_INCLUDE_DIR:STRING=/usr/include/postregsql ../libpqxx
+
+cd src
+make
+
+cd ../../
+mkdir project_build
+cd project_build
+cmake ../
+make
+
+cd ..
+mv dbinit.sql project_build/

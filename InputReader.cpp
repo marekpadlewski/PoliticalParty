@@ -13,8 +13,8 @@ void InputReader::readInit() {
         json jobj = json::parse(line);
 
         if (!jobj["leader"].is_null()){
-
-            dbfun.leader(jobj["leader"]);
+            pqxx::connection C("dbname=student host=localhost user=init password=qwerty");
+            dbfun.leader(jobj["leader"], C);
         }
 
         else if (!jobj["open"].is_null()){
@@ -28,40 +28,42 @@ void InputReader::readApp() {
 
     std::string line;
 
+    pqxx::connection C("dbname=student host=localhost user=app password=qwerty");
+
     while (std::getline(std::cin, line)){
 
         json jobj = json::parse(line);
 
         if (!jobj["protest"].is_null()){
-            dbfun.createAction(jobj["protest"], "protest");
+            dbfun.createAction(jobj["protest"], "protest", C);
         }
 
         else if (!jobj["support"].is_null()){
-            dbfun.createAction(jobj["support"], "support");
+            dbfun.createAction(jobj["support"], "support", C);
         }
 
         else if (!jobj["upvote"].is_null()){
-            dbfun.vote(jobj["upvote"], "upvote");
+            dbfun.vote(jobj["upvote"], "upvote", C);
         }
 
         else if (!jobj["downvote"].is_null()){
-            dbfun.vote(jobj["downvote"], "downvote");
+            dbfun.vote(jobj["downvote"], "downvote", C);
         }
 
         else if (!jobj["actions"].is_null()){
-            dbfun.actions(jobj["actions"]);
+            dbfun.actions(jobj["actions"], C);
         }
 
         else if (!jobj["projects"].is_null()){
-            dbfun.projects(jobj["projects"]);
+            dbfun.projects(jobj["projects"], C);
         }
 
         else if (!jobj["votes"].is_null()){
-            dbfun.votes(jobj["votes"]);
+            dbfun.votes(jobj["votes"], C);
         }
 
         else if (!jobj["trolls"].is_null()){
-            dbfun.trolls(jobj["trolls"]);
+            dbfun.trolls(jobj["trolls"], C);
         }
         else if (!jobj["open"].is_null()){
 

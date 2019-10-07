@@ -63,13 +63,12 @@ void DatabaseFunctions::openApp(nlohmann::json jobj) {
 
 }
 
-void DatabaseFunctions::leader(nlohmann::json jobj) {
+void DatabaseFunctions::leader(nlohmann::json jobj, pqxx::connection_base &C) {
 
     int id = jobj["member"];
     long ts = jobj["timestamp"];
     std::string pass = jobj["password"];
 
-    pqxx::connection C("dbname=" + db_name + " host=localhost user=init password=qwerty");
     pqxx::work W(C);
 
     //check if memberid is taken
@@ -95,7 +94,7 @@ void DatabaseFunctions::leader(nlohmann::json jobj) {
     }
 }
 
-void DatabaseFunctions::createAction(nlohmann::json jobj, const std::string &type) {
+void DatabaseFunctions::createAction(nlohmann::json jobj, const std::string &type, pqxx::connection_base &C) {
     bool flag = true;
 
     int memberid = jobj["member"];
@@ -104,9 +103,7 @@ void DatabaseFunctions::createAction(nlohmann::json jobj, const std::string &typ
     int actionid = jobj["action"];
     int projectid = jobj["project"];
 
-    pqxx::connection C("dbname=" + db_name + " host=localhost user=app password=qwerty");
     pqxx::work W(C);
-
     pqxx::result R;
 
     R = W.exec("SELECT id FROM members WHERE id = " + std::to_string(memberid));
@@ -244,7 +241,7 @@ void DatabaseFunctions::createAction(nlohmann::json jobj, const std::string &typ
     }
 }
 
-void DatabaseFunctions::vote(nlohmann::json jobj, const std::string &type) {
+void DatabaseFunctions::vote(nlohmann::json jobj, const std::string &type, pqxx::connection_base &C) {
     bool flag = true;
 
     int memberid = jobj["member"];
@@ -252,9 +249,7 @@ void DatabaseFunctions::vote(nlohmann::json jobj, const std::string &type) {
     std::string mempass = jobj["password"];
     int actionid = jobj["action"];
 
-    pqxx::connection C("dbname=" + db_name + " host=localhost user=app password=qwerty");
     pqxx::work W(C);
-
     pqxx::result R;
 
     R = W.exec("SELECT id FROM members WHERE id = " + std::to_string(memberid));
@@ -349,7 +344,7 @@ void DatabaseFunctions::vote(nlohmann::json jobj, const std::string &type) {
 }
 
 
-void DatabaseFunctions::actions(nlohmann::json jobj) {
+void DatabaseFunctions::actions(nlohmann::json jobj, pqxx::connection_base &C) {
     bool flag = true;
 
     long ts = jobj["timestamp"];
@@ -376,10 +371,7 @@ void DatabaseFunctions::actions(nlohmann::json jobj) {
         condition += s3;
     }
 
-
-    pqxx::connection C("dbname=" + db_name + " host=localhost user=app password=qwerty");
     pqxx::work W(C);
-
     pqxx::result R;
 
     R =  W.exec("SELECT id FROM members WHERE id = " + std::to_string(memberid) + " AND password = crypt('" + mempass + "', password) AND isleader ");
@@ -447,7 +439,7 @@ void DatabaseFunctions::actions(nlohmann::json jobj) {
 
 }
 
-void DatabaseFunctions::projects(nlohmann::json jobj) {
+void DatabaseFunctions::projects(nlohmann::json jobj, pqxx::connection_base &C) {
     bool flag = true;
 
     long ts = jobj["timestamp"];
@@ -463,10 +455,7 @@ void DatabaseFunctions::projects(nlohmann::json jobj) {
         condition += s1;
     }
 
-
-    pqxx::connection C("dbname=" + db_name + " host=localhost user=app password=qwerty");
     pqxx::work W(C);
-
     pqxx::result R;
 
     R =  W.exec("SELECT id FROM members WHERE id = " + std::to_string(memberid) + " AND password = crypt('" + mempass + "', password) AND isleader ");
@@ -525,7 +514,7 @@ void DatabaseFunctions::projects(nlohmann::json jobj) {
 
 }
 
-void DatabaseFunctions::votes(nlohmann::json jobj) {
+void DatabaseFunctions::votes(nlohmann::json jobj, pqxx::connection_base &C) {
     bool flag = true;
 
     long ts = jobj["timestamp"];
@@ -548,10 +537,7 @@ void DatabaseFunctions::votes(nlohmann::json jobj) {
         condition2 += s2;
     }
 
-
-    pqxx::connection C("dbname=" + db_name + " host=localhost user=app password=qwerty");
     pqxx::work W(C);
-
     pqxx::result R;
 
     R =  W.exec("SELECT id FROM members WHERE id = " + std::to_string(memberid) + " AND password = crypt('" + mempass + "', password) AND isleader ");
@@ -612,14 +598,12 @@ void DatabaseFunctions::votes(nlohmann::json jobj) {
 
 }
 
-void DatabaseFunctions::trolls(nlohmann::json jobj) {
+void DatabaseFunctions::trolls(nlohmann::json jobj, pqxx::connection_base &C) {
     bool flag = true;
 
     long ts = jobj["timestamp"];
 
-    pqxx::connection C("dbname=" + db_name + " host=localhost user=app password=qwerty");
     pqxx::work W(C);
-
     pqxx::result R;
 
     R = W.exec("SELECT * FROM (SELECT memberid, SUM(upvotes) AS num_upvotes, SUM(downvotes) "
